@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html manifest="fitnessscan.appcache">
+<head>
+<meta charset="UTF-8">
+<title>FitnessScan</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FitnessScan">
+<link rel="apple-touch-icon" href="launcher-icon-4x.png">
+<link rel="icon" sizes="192x192" href="launcher-icon-4x.png">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="CSS/bootstrap.min.css">
+<!-- Optional theme -->
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="CSS/MainPage.css">
+<script src="Scripts/jquery-2.1.3.min.js"></script>
+<script src="Scripts/jquery-barcode.js"></script>
+<script src="Scripts/jquery.bsAlerts.min.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="Scripts/bootstrap.min.js"></script>
+<script src="Scripts/Vue.js"></script>
+<script src="Scripts/MainPage.js"></script>
+<script>
+$(function() {
+
+		var settings = {
+			barWidth: 2,
+			barHeight: 100,
+			showHRI: true,
+			addQuietZone: true,
+			output: "svg",
+    };
+		var mainpage = new MainPage(settings);
+		mainpage.LoadSavedCards();
+		// Initialize Vue with binding element and data.
+				Vue.directive('barcode', function (el, binding) {
+					var empty = $('<div></div>');
+					var barcode = $(empty).barcode(
+				binding.value.cardno, // Value barcode (dependent on the type of barcode)
+				"code39",
+				settings
+				);
+				el.innerHTML = barcode.html();
+		});
+
+		var view = new Vue({
+		el:'.cards', 
+		data:{Cards:mainpage.CardsList, App:mainpage},
+		methods: {
+								GetFooterClass: function (gym) {
+										switch(gym)
+										{
+											case "LA FITNESS":
+												return "lafitness";
+											case "LIFETIME":
+												return "lifetime";
+											case "OTHER":
+												return "other";
+											default:
+												return "";
+										}
+								}
+							}
+		});
+		$("#btnAddCardSave").click(function(){
+			var re = /[^A-Za-z0-9 ]/;
+			$(document).trigger("clear-alerts");
+			var name = $("#name").val();
+			var cardno = $("#fitness-number").val();
+			var gym = $("#gymSelectButton").text().trim();
+			
+			if(name == "")
+			{
+				$(document).trigger("add-alerts", [
+					{
+					  'message': "Name Must Be Filled Out.",
+					  'priority': 'error'
+					}
+				]);
+			}
+			else if(cardno == "")
+			{
+				$(document).trigger("add-alerts", [
+					{
+					  'message': "Card Number Must Be Filled Out.",
+					  'priority': 'error'
+					}
+				]);
+			}
+			else if(cardno != "" && cardno.length < 3)
+			{
+					$(document).trigger("add-alerts", [
+					{
+					  'message': "Card Number Length Must Be > 3",
+					  'priority': 'error'
+					}
+				]);
+			}
+			else if(re.test(cardno))
+			{
+					$(document).trigger("add-alerts", [
+					{
+					  'message': "Special Characters Not Allowed For Card Number.",
+					  'priority': 'error'
+					}				]);
+			}
+			else if(gym == "Click To See Gyms" || gym == "")
+			{
+				$(document).trigger("add-alerts", [
+					{
+					  'message': "Gym Required.",
+					  'priority': 'error'
+					}
+				]);
+			}
+			else
+			{
+				mainpage.AddCardToList(name, cardno, gym);
+				$("#gymSelectButton").val("Click To See Gyms");
+				$("#gymSelectButton").text("Click To See Gyms");
+				$("#name").val("");
+				$("#fitness-number").val("");
+				$('#myModal').modal('hide');
+				//document.location.reload(false);
+			}
+		});
+		$(".dropdown-menu li a").click(function(){
+		  $("#gymSelectButton").text($(this).text());
+		  $("#gymSelectButton").val($(this).text());
+		});
+		$(document).on('click', '.removeCard', function(){
+			var id = $(this).closest(".cardHeader").prop("id");
+			if(id != "")
+			{
+				var r = confirm("Are you sure you want to remove this card?");
+				if (r == true) {
+					mainpage.RemoveCardFromList(parseInt(id));
+					//document.location.reload(false);	
+				}
+			}
+		});
+		$(document).on('click', '.cardBodyOverlay', function(){
+			$(".cardBodyOverlay").each(function(ind, val){
+				if($(val).hasClass("active") == true)
+				{
+					$(val).toggleClass("active");
+				}
+			});
+			
+			$(this).toggleClass("active");
+		});
+		$(".btnInfo").click(function(){
+			$('#modalInfo').modal('show');
+		});
+});
+</script>
+</head>
+<body>
+<nav class="navbar-custom" role="navigation">
+  <!-- Brand and toggle get grouped for better mobile display -->
+  <div class="pull-left">
+	  <div>
+		<span class="vcenter" style="font-weight: bold; font-size:26px; margin-left:10px;">FITNESS SCAN</span>
+		<img src="./Assets/Images/Logo.png" class="vcenter" height="50" width="50">
+	  </div>
+  </div>
+  <div class="pull-right">
+	<div class="glyphicon glyphicon-info-sign btnInfo vcenter"></div>
+  </div>
+    
+</nav>
+	<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="Add A Card" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+		<h4 class="modal-title" id="myModalLabel">Card Details</h4>
+      </div>
+      <div class="modal-body">
+	  <div data-alerts="alerts"></div>
+        <div class="input-group input-group-lg">
+			<div>
+				<span class="white">Name</span>
+				<input id="name" type="text" class="form-control" placeholder="Name">
+			</div>
+			<br>
+			<br>
+			<div>
+				<span class="white">Fitness Number</span>
+				<input id="fitness-number" type="text" class="form-control" placeholder="F12345678">
+			</div>
+			<br>
+			<br>
+			
+			<div class="gymlist">
+			<span class="white">Select Gym Membership</span>
+				<div> 
+				<button type="button" id="gymSelectButton" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+				   Click To See Gyms
+				   <span class="caret"></span>
+				 </button>
+				 <ul class="dropdown-menu pull-left">
+				   <li><a href="http://fitnessscan.azurewebsites.net/#" data-value="LA FITNESS">LA FITNESS</a></li>
+				   <li><a href="http://fitnessscan.azurewebsites.net/#" data-value="LIFETIME">LIFETIME</a></li>
+				   <li><a href="http://fitnessscan.azurewebsites.net/#" data-value="OTHER">OTHER</a></li>
+				 </ul>
+				</div>
+			</div>
+		</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" id="btnAddCardSave" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modalInfo">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+        <h4 class="modal-title">About</h4>
+      </div>
+      <div class="modal-body white">
+        <p>Version 1.1 © Blake Haas 2017</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+	<div class="container-fluid">
+		<div class="row">
+			<div class="centeredContent">
+			<div style="font-size:2em" class="white vcenter btnAddNewCard" data-toggle="modal" data-target="#myModal">Add A New Card <span><img src="./Assets/Images/add_white.png" height="35" width="35"></span></div>
+				<br>
+				<br>
+				<ul class="cards">
+					<li v-for="(card, index) in Cards">
+    				<div class="masterCard">
+							<div class="cardBodyOverlay"></div>
+							<div class="cardHeader" :id="index">
+									{{card.name}} 
+							<div class="pull-right removeCard glyphicon glyphicon-remove-circle"></div>
+							</div>
+							<div class="cardBody" v-barcode="{cardno:card.cardno}">
+									
+							</div>
+							<div class="cardBottom" :class="GetFooterClass(card.gym)"></div>
+						</div>
+					</li>
+				</ul>
+			</div>
+	</div>
+	</div>
+
+
+</body></html>
