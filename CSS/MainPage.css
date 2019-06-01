@@ -46,6 +46,7 @@ h4{
 	width:100%;
 	height:100%;
 	color:#FFFFFF;
+	z-index:10;
 }
 .svg-content{
 	padding-top:10px;
@@ -104,6 +105,7 @@ h4{
 }
 .removeCard{
 	font-size:1.2em;
+	z-index:11;
 }
 .lafitness{
 	background-color:#ffb200;

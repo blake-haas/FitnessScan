@@ -16,7 +16,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="CSS/MainPage.css">
 <script src="Scripts/jquery-2.1.3.min.js"></script>
-<script src="Scripts/jquery-barcode.js"></script>
+<script src="Scripts/JsBarcode.js"></script>
 <script src="Scripts/jquery.bsAlerts.min.js"></script>
 <!-- Latest compiled and minified JavaScript -->
 <script src="Scripts/bootstrap.min.js"></script>
@@ -25,29 +25,42 @@
 <script>
 $(function() {
 
-		var settings = {
-			barWidth: 2,
-			barHeight: 100,
-			showHRI: true,
-			addQuietZone: true,
-			output: "svg",
-    };
-		var mainpage = new MainPage(settings);
+		var mainpage = new MainPage();
 		mainpage.LoadSavedCards();
 		// Initialize Vue with binding element and data.
 				Vue.directive('barcode', function (el, binding) {
-					var empty = $('<div></div>');
-					var barcode = $(empty).barcode(
-				binding.value.cardno, // Value barcode (dependent on the type of barcode)
-				"code39",
-				settings
-				);
-				el.innerHTML = barcode.html();
+				el.innerHTML = '<svg id="'+ binding.value.cardno + '" width="100%" height="100%"></svg>';
 		});
 
 		var view = new Vue({
 		el:'.cards', 
 		data:{Cards:mainpage.CardsList, App:mainpage},
+		updated() {
+			for(var i =0; i<= mainpage.CardsList.length; i++) {
+				JsBarcode('#'+mainpage.CardsList[i].cardno, mainpage.CardsList[i].cardno, {
+				  format: "code39",
+				  displayValue: true,
+				  height: 100,
+				  width: 2
+				});
+				$('#'+mainpage.CardsList[i].cardno).width('100%');
+				$('#'+mainpage.CardsList[i].cardno).height('100%');
+			}
+		},
+		mounted() {
+			this.$nextTick(() => {
+				for(var i =0; i<= mainpage.CardsList.length; i++) {
+					JsBarcode('#'+mainpage.CardsList[i].cardno, mainpage.CardsList[i].cardno, {
+					  format: "code39",
+					  displayValue: true,
+					  height: 100,
+					  width: 2
+					});
+					$('#'+mainpage.CardsList[i].cardno).width('100%');
+					$('#'+mainpage.CardsList[i].cardno).height('100%');
+				}
+			})
+		},
 		methods: {
 								GetFooterClass: function (gym) {
 										switch(gym)

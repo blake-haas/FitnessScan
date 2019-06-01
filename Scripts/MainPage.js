@@ -1,6 +1,5 @@
-function MainPage(settings){
+function MainPage(){
 	var self = this;
-	self.Settings = settings;
 	self.CardsList = [];
 	self.LoadSavedCards = function(){
 		try{
